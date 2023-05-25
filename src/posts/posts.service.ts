@@ -62,7 +62,7 @@ export class PostsService {
   async findOne(id: number) {
     try {
       const post = await this.prismaService.post.findUnique({where: {id}})
-      if(!post) throw new BadRequestException('Invalid id')
+      if(!post) throw new BadRequestException('Not Found Post')
 
       return post
     } catch (error) {
@@ -78,8 +78,10 @@ export class PostsService {
       const post = await this.prismaService.post.findUnique({where: {id}})
       if(!post) throw new BadRequestException('Invalid id')
 
-      if(updatePostDto.image){
-
+      await this.prismaService.post.update({where: {id}, data: updatePostDto})
+      return {
+        status: 200,
+        message: "Post updated!"
       }
     } catch (error) {
       console.log(error)
@@ -89,7 +91,20 @@ export class PostsService {
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} post`;
+  async remove(id: number) {
+    try {
+      const post = await this.prismaService.post.findUnique({where: {id}})
+      if(!post) throw new BadRequestException('Not Found')
+
+      await this.prismaService.post.delete({where: {id}})
+
+      return {
+        status: 200,
+        message: 'Post deleted!'
+      }
+    }catch (error) {
+    if(!error.status) throw new InternalServerErrorException(error.message)
+      throw new HttpException(error.message, error.status)
+    }
   }
 }

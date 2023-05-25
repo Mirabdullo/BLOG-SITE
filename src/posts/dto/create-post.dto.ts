@@ -10,7 +10,7 @@ export class CreatePostDto {
     description: string
 
     @IsOptional()
-    @IsString()
+    // @IsString()
     image: string
 
 }

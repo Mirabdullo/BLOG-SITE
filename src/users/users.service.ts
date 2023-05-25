@@ -2,15 +2,15 @@ import {BadRequestException, HttpException, HttpStatus, Injectable} from '@nestj
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {PrismaService} from "../prisma/prisma.service";
-import {JwtService} from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import {LoginDto} from "./dto/login.dto";
+import {TokensService} from "../tokens/tokens.service";
 
 @Injectable()
 export class UsersService {
   constructor(
       private prismaService: PrismaService,
-      private readonly jwtService: JwtService
+      private tokenService: TokensService
   ) {}
   async signup(createUserDto: CreateUserDto) {
     try {
@@ -36,7 +36,7 @@ export class UsersService {
         email: newuser.email,
         is_admin: newuser.is_admin
       }
-      const token = await this.getTokens(payload)
+      const token = await this.tokenService.getTokens(payload)
       console.log(token)
       return token
     } catch (error) {
@@ -65,7 +65,8 @@ export class UsersService {
         email: user.email,
         is_admin: user.is_admin
       }
-      const token = this.getTokens(payload)
+      const token = await this.tokenService.getTokens(payload)
+      console.log(token)
       return {
         access_token: token
       }
@@ -119,7 +120,7 @@ export class UsersService {
 
   async findOne(id: number) {
     try {
-      const user = await this.prismaService.user.findUnique({where: {id: id}})
+      const user = await this.prismaService.user.findUnique({where: {id: id}, include: {Post: true}})
       if(!user) throw new HttpException('Not Found', HttpStatus.NOT_FOUND)
 
       return user
@@ -164,19 +165,4 @@ export class UsersService {
     return `This action removes a #${id} admin`;
   }
 
-
-
-  async getTokens(
-      jwtPayload: object
-  ) {
-    const [accessToken] = await Promise.all([
-      this.jwtService.signAsync(jwtPayload, {
-        secret: process.env.ACCESS_TOKEN_KEY,
-        expiresIn: process.env.ACCESS_TOKEN_TIME,
-      }),
-    ]);
-    return {
-      access_token: accessToken,
-    };
-  }
 }

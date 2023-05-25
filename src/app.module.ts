@@ -6,6 +6,7 @@ import { PostsModule } from './posts/posts.module';
 import * as process from "process";
 import {ServeStaticModule} from "@nestjs/serve-static";
 import { resolve } from 'path';
+import {MulterModule} from "@nestjs/platform-express";
 
 @Module({
   imports: [
@@ -13,8 +14,11 @@ import { resolve } from 'path';
       isGlobal: true,
       envFilePath: `.${process.env.NODE_ENV}.env`
     }),
+      MulterModule.register({
+        dest: './uploads'
+      }),
       ServeStaticModule.forRoot({
-        rootPath: resolve(__dirname, '..', 'images')
+        rootPath: resolve(__dirname, '..', 'uploads')
       }),
     UsersModule,
     PrismaModule,
